@@ -12,15 +12,32 @@ jobs:
         with:
           python-version: '3.11'
 
+      - name: Cache Buildozer and Android SDK
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.buildozer
+            .buildozer
+            ~/.gradle
+          key: ${{ runner.os }}-buildozer-${{ hashFiles('buildozer.spec') }}
+          restore-keys: |
+            ${{ runner.os }}-buildozer-
+
       - name: Install system dependencies
         run: |
           sudo apt-get update
-          sudo apt-get install -y             build-essential             git             python3-dev             ffmpeg             libsdl2-dev             libsdl2-image-dev             libsdl2-mixer-dev             libsdl2-ttf-dev             libportmidi-dev             libswscale-dev             libavformat-dev             libavcodec-dev             zlib1g-dev             libgstreamer1.0-dev             gstreamer1.0-plugins-base             gstreamer1.0-plugins-good             libffi-dev             libssl-dev             autoconf             automake             libtool             pkg-config             gettext             cmake
+          sudo apt-get install -y             build-essential git python3-dev ffmpeg libsdl2-dev libsdl2-image-dev             libsdl2-mixer-dev libsdl2-ttf-dev libportmidi-dev libswscale-dev             libavformat-dev libavcodec-dev zlib1g-dev libgstreamer1.0-dev             gstreamer1.0-plugins-base gstreamer1.0-plugins-good libffi-dev             libssl-dev autoconf automake libtool pkg-config gettext cmake             libltdl-dev
+          
+          # Fix für die fehlenden Makros
+          sudo ln -s /usr/share/aclocal/libtool.m4 /usr/share/aclocal/ltoptions.m4 /usr/share/aclocal/ltsugar.m4 /usr/share/aclocal/ltversion.m4 /usr/share/aclocal/lt~obsolete.m4 /usr/share/autoconf/autoconf/ || true
+          
           pip install --upgrade pip
-          pip install buildozer cython==0.29.33
+          pip install buildozer "cython<3.0.0"
 
       - name: Build with Buildozer
         run: |
+          # Wir erzwingen ein sauberes Environment für libffi
+          export ACLOCAL_PATH=/usr/share/aclocal
           buildozer android debug
         env:
           APP_ANDROID_ACCEPT_SDK_LICENSE: 1
